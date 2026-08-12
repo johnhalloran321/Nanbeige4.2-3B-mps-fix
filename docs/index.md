@@ -377,26 +377,6 @@ limitation. It would show up even on hardware fast enough to make decode through
 complete non-issue, and it's worth reporting on its own rather than folding it into the
 same "it's just slow" story as MCPMark.
 
-## How far does any of this generalize?
-
-The chunked-prefill fix isn't specific to Nanbeige's attention implementation, and neither
-is the gap it addresses. Nanbeige's Looped Transformer is built directly on
-[Mixture-of-Recursions](https://arxiv.org/abs/2507.10524), part of a growing family of
-looped/recursive-depth architectures that share the same naive-prefill memory
-characteristic by construction — and, per our decode measurements, the same
-decode-throughput cost, since every generated token pays for both loop iterations too.
-Apple Silicon's inference-serving ecosystem (vLLM's Metal backend, SGLang's Apple Silicon
-support) is still immature relative to CUDA, independent of architecture, so custom
-`trust_remote_code` models on Apple Silicon frequently fall back to plain
-`transformers.generate()` whether or not they're looped transformers at all. This isn't
-hypothetical, either — an independently-filed report
-([ml-explore/mlx-lm #1480](https://github.com/ml-explore/mlx-lm/issues/1480)) describes
-the same failure class, a long-context prefill OOM on Apple Silicon, on a completely
-different model family, unresolved as of this writing.
-
-We don't attempt to fix this for other architectures here — that's a genuinely larger
-undertaking we're pursuing separately, using this project as its motivating case study.
-
 ## Try it yourself
 
 Everything above has a script behind it. See the repo's [README](../README.md) for setup,
