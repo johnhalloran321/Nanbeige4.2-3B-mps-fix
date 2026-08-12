@@ -1,0 +1,27 @@
+{
+  "task_name": "file_context__uppercase",
+  "model_name": "openai/nanbeige42-harness",
+  "litellm_run_model_name": "nanbeige42-harness",
+  "reasoning_effort": "default",
+  "mcp": "filesystem",
+  "timeout": 3600,
+  "time": {
+    "start": "2026-08-09T06:37:50.791434",
+    "end": "2026-08-09T07:36:32.199216"
+  },
+  "agent_execution_time": 3521.2735130786896,
+  "task_execution_time": 3521.407774925232,
+  "execution_result": {
+    "success": false,
+    "error_message": "litellm.InternalServerError: InternalServerError: OpenAIException - Internal Server Error",
+    "verification_error": "Verification failed with no error message",
+    "verification_output": "🔍 Verifying Uppercase in: /Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/.mcpmark_backups/backup_filesystem_file_context_uppercase_85662\n\n📋 Uppercase directory exists...\n✅ Uppercase directory found\n\n📋 Uppercase files exist...\n❌ File 'file_01.txt' not found in uppercase directory\n\n📋 Uppercase content is correct...\n❌ Error reading file 'file_01.txt': [Errno 2] No such file or directory: '/Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/.mcpmark_backups/backup_filesystem_file_context_uppercase_85662/uppercase/file_01.txt'\n\n❌ Some verification checks failed!\n"
+  },
+  "token_usage": {
+    "input_tokens": 35962,
+    "output_tokens": 1872,
+    "total_tokens": 37834,
+    "reasoning_tokens": 0
+  },
+  "turn_count": 7
+}

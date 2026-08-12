@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+
+# Regenerated locally by experiments/prepare_longbench_samples.py (~80MB, not committed)
+experiments/longbench_samples.json
+
+# Paper is still under active revision; not committed here (arXiv is its home once submitted)
+paper/*~

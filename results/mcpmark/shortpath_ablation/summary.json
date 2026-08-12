@@ -1,0 +1,54 @@
+{
+  "model_name": "openai/nanbeige42-harness",
+  "model_config": {
+    "mcp_service": "filesystem",
+    "model_name": "openai/nanbeige42-harness",
+    "litellm_run_model_name": "nanbeige42-harness",
+    "reasoning_effort": "default",
+    "timeout": 3600,
+    "agent_name": "mcpmark"
+  },
+  "total_tasks": 1,
+  "successful_tasks": 0,
+  "failed_tasks": 1,
+  "success_rate": 0.0,
+  "total_task_execution_time": 987.6515040397644,
+  "average_task_execution_time": 987.6515040397644,
+  "total_agent_execution_time": 987.3008630275726,
+  "average_agent_execution_time": 987.3008630275726,
+  "token_usage": {
+    "total_input_tokens": 5101,
+    "total_output_tokens": 245,
+    "total_tokens": 5346,
+    "total_reasoning_tokens": 0,
+    "avg_input_tokens": 5101.0,
+    "avg_output_tokens": 245.0,
+    "avg_total_tokens": 5346.0,
+    "avg_reasoning_tokens": 0.0
+  },
+  "turn_usage": {
+    "total_turns": 2,
+    "avg_turns": 2.0
+  },
+  "category_breakdown": {
+    "student_database": {
+      "total": 1,
+      "success_rate": 0.0,
+      "avg_time": 987.65,
+      "token_usage": {
+        "total_input": 5101,
+        "total_output": 245,
+        "total": 5346,
+        "total_reasoning": 0,
+        "avg_input": 5101.0,
+        "avg_output": 245.0,
+        "avg_total": 5346.0,
+        "avg_reasoning": 0.0
+      },
+      "turn_usage": {
+        "total_turns": 2,
+        "avg_turns": 2.0
+      }
+    }
+  }
+}

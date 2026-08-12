@@ -1,0 +1,27 @@
+{
+  "task_name": "file_property__txt_merging",
+  "model_name": "openai/nanbeige42-harness",
+  "litellm_run_model_name": "nanbeige42-harness",
+  "reasoning_effort": "default",
+  "mcp": "filesystem",
+  "timeout": 3600,
+  "time": {
+    "start": "2026-08-09T07:53:54.647113",
+    "end": "2026-08-09T08:13:08.207558"
+  },
+  "agent_execution_time": 1153.4741179943085,
+  "task_execution_time": 1153.5604419708252,
+  "execution_result": {
+    "success": true,
+    "error_message": null,
+    "verification_error": null,
+    "verification_output": "🔍 Verifying text file merging in: /Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/.mcpmark_backups/backup_filesystem_file_property_txt_merging_98048\n\n📋 Checking: Merge file existence\n✅ merge.txt exists\n\n📋 Checking: Merge file contents\n✅ merge.txt contains all expected content\n\n🎉 All verification checks passed!\n"
+  },
+  "token_usage": {
+    "input_tokens": 20647,
+    "output_tokens": 2450,
+    "total_tokens": 23097,
+    "reasoning_tokens": 0
+  },
+  "turn_count": 5
+}

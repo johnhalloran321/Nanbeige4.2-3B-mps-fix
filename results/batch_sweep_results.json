@@ -1,0 +1,379 @@
+{
+  "1024": {
+    "naive": {
+      "max_batch": 16,
+      "first_fail_batch": 32,
+      "fail_reason": "MPS backend out of memory (MPS allocated: 21.46 GiB, other allocations: 12.01 GiB, max allowed: 42.43 GiB). Tried to allocate 10.14 GiB on private pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disable upper limit for memory allocations (may cause system failure).",
+      "repeats": [
+        {
+          "ok": true,
+          "length": 1024,
+          "batch_size": 16,
+          "method": "naive",
+          "seconds": 59.553059101104736,
+          "tokens_per_sec": 275.11600994643226
+        },
+        {
+          "ok": true,
+          "length": 1024,
+          "batch_size": 16,
+          "method": "naive",
+          "seconds": 59.6120388507843,
+          "tokens_per_sec": 274.84381201943137
+        },
+        {
+          "ok": true,
+          "length": 1024,
+          "batch_size": 16,
+          "method": "naive",
+          "seconds": 59.377740144729614,
+          "tokens_per_sec": 275.9283185932136
+        }
+      ],
+      "seconds_mean": 59.51427936553955,
+      "tokens_per_sec_mean": 275.29604685302576
+    },
+    "chunked": {
+      "max_batch": 32,
+      "first_fail_batch": 64,
+      "fail_reason": "MPS backend out of memory (MPS allocated: 35.03 GiB, other allocations: 3.00 GiB, max allowed: 42.43 GiB). Tried to allocate 10.14 GiB on private pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disable upper limit for memory allocations (may cause system failure).",
+      "repeats": [
+        {
+          "ok": true,
+          "length": 1024,
+          "batch_size": 32,
+          "method": "chunked",
+          "seconds": 148.88554906845093,
+          "tokens_per_sec": 220.08851903373602
+        },
+        {
+          "ok": true,
+          "length": 1024,
+          "batch_size": 32,
+          "method": "chunked",
+          "seconds": 167.84784197807312,
+          "tokens_per_sec": 195.2244343080721
+        },
+        {
+          "ok": true,
+          "length": 1024,
+          "batch_size": 32,
+          "method": "chunked",
+          "seconds": 147.45844292640686,
+          "tokens_per_sec": 222.2185406932159
+        }
+      ],
+      "seconds_mean": 154.7306113243103,
+      "tokens_per_sec_mean": 212.51049801167468
+    }
+  },
+  "2048": {
+    "naive": {
+      "max_batch": 4,
+      "first_fail_batch": 8,
+      "fail_reason": "MPS backend out of memory (MPS allocated: 20.85 GiB, other allocations: 12.01 GiB, max allowed: 42.43 GiB). Tried to allocate 10.14 GiB on private pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disable upper limit for memory allocations (may cause system failure).",
+      "repeats": [
+        {
+          "ok": true,
+          "length": 2048,
+          "batch_size": 4,
+          "method": "naive",
+          "seconds": 30.67639708518982,
+          "tokens_per_sec": 267.04570218107506
+        },
+        {
+          "ok": true,
+          "length": 2048,
+          "batch_size": 4,
+          "method": "naive",
+          "seconds": 30.59432077407837,
+          "tokens_per_sec": 267.76211377573156
+        },
+        {
+          "ok": true,
+          "length": 2048,
+          "batch_size": 4,
+          "method": "naive",
+          "seconds": 30.593082904815674,
+          "tokens_per_sec": 267.77294807090175
+        }
+      ],
+      "seconds_mean": 30.621266921361286,
+      "tokens_per_sec_mean": 267.52692134256944
+    },
+    "chunked": {
+      "max_batch": 16,
+      "first_fail_batch": 32,
+      "fail_reason": "timeout",
+      "repeats": [
+        {
+          "ok": true,
+          "length": 2048,
+          "batch_size": 16,
+          "method": "chunked",
+          "seconds": 277.6713569164276,
+          "tokens_per_sec": 118.01001141742675
+        },
+        {
+          "ok": true,
+          "length": 2048,
+          "batch_size": 16,
+          "method": "chunked",
+          "seconds": 174.3736491203308,
+          "tokens_per_sec": 187.9183016774951
+        },
+        {
+          "ok": true,
+          "length": 2048,
+          "batch_size": 16,
+          "method": "chunked",
+          "seconds": 194.56627464294434,
+          "tokens_per_sec": 168.41562115599814
+        }
+      ],
+      "seconds_mean": 215.5370935599009,
+      "tokens_per_sec_mean": 158.11464475030667
+    }
+  },
+  "4096": {
+    "naive": {
+      "max_batch": 2,
+      "first_fail_batch": 4,
+      "fail_reason": "timeout",
+      "repeats": [
+        {
+          "ok": true,
+          "length": 4096,
+          "batch_size": 2,
+          "method": "naive",
+          "seconds": 46.25157713890076,
+          "tokens_per_sec": 177.11828453758747
+        },
+        {
+          "ok": true,
+          "length": 4096,
+          "batch_size": 2,
+          "method": "naive",
+          "seconds": 52.59955382347107,
+          "tokens_per_sec": 155.74276594613528
+        },
+        {
+          "ok": true,
+          "length": 4096,
+          "batch_size": 2,
+          "method": "naive",
+          "seconds": 57.531352043151855,
+          "tokens_per_sec": 142.39192560354786
+        }
+      ],
+      "seconds_mean": 52.12749433517456,
+      "tokens_per_sec_mean": 158.41765869575687
+    },
+    "chunked": {
+      "max_batch": 4,
+      "first_fail_batch": 8,
+      "fail_reason": "MPS backend out of memory (MPS allocated: 20.12 GiB, other allocations: 22.50 GiB, max allowed: 42.43 GiB). Tried to allocate 24.00 MiB on private pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disable upper limit for memory allocations (may cause system failure).",
+      "repeats": [
+        {
+          "ok": true,
+          "length": 4096,
+          "batch_size": 4,
+          "method": "chunked",
+          "seconds": 140.99567890167236,
+          "tokens_per_sec": 116.20214270130847
+        },
+        {
+          "ok": true,
+          "length": 4096,
+          "batch_size": 4,
+          "method": "chunked",
+          "seconds": 146.4745888710022,
+          "tokens_per_sec": 111.85557936215902
+        },
+        {
+          "ok": true,
+          "length": 4096,
+          "batch_size": 4,
+          "method": "chunked",
+          "seconds": 112.01324701309204,
+          "tokens_per_sec": 146.26841411074395
+        }
+      ],
+      "seconds_mean": 133.16117159525552,
+      "tokens_per_sec_mean": 124.77537872473715
+    }
+  },
+  "8192": {
+    "naive": {
+      "max_batch": null,
+      "first_fail_batch": 1,
+      "fail_reason": "timeout"
+    },
+    "chunked": {
+      "max_batch": 1,
+      "first_fail_batch": 2,
+      "fail_reason": "MPS backend out of memory (MPS allocated: 21.90 GiB, other allocations: 20.39 GiB, max allowed: 42.43 GiB). Tried to allocate 174.00 MiB on private pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disable upper limit for memory allocations (may cause system failure).",
+      "repeats": [
+        {
+          "ok": true,
+          "length": 8192,
+          "batch_size": 1,
+          "method": "chunked",
+          "seconds": 48.77019286155701,
+          "tokens_per_sec": 167.97144975937394
+        },
+        {
+          "ok": true,
+          "length": 8192,
+          "batch_size": 1,
+          "method": "chunked",
+          "seconds": 48.307185888290405,
+          "tokens_per_sec": 169.58139559078992
+        },
+        {
+          "ok": true,
+          "length": 8192,
+          "batch_size": 1,
+          "method": "chunked",
+          "seconds": 48.626232862472534,
+          "tokens_per_sec": 168.46873627182015
+        }
+      ],
+      "seconds_mean": 48.56787053743998,
+      "tokens_per_sec_mean": 168.67386054066134
+    }
+  },
+  "12244": {
+    "naive": {
+      "max_batch": null,
+      "first_fail_batch": 1,
+      "fail_reason": "exit=-6:   warnings.warn(DEPRECATION_MESSAGE, FutureWarning)\n/AppleInternal/Library/BuildRoots/4~CNqCugBVDnyjMNMKkBLi7l_mFxe7szyKNeR6JxM/Library/Caches/com.apple.xbs/TemporaryDirectory.BsrFNm/Sources/MetalPerformanceShaders/MPSCore/Utility/MPSCommandBufferImageCache.mm:1420: failed assertion `Failed to allocate private MTLBuffer for size 28783782912\n'\n/Users/halloranjt/miniconda3/envs/ironclad-agents/lib/python3.11/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown\n  warnings.warn('resource_tracker: There appear to be %d '"
+    },
+    "chunked": {
+      "max_batch": null,
+      "first_fail_batch": 1,
+      "fail_reason": "MPS backend out of memory (MPS allocated: 18.84 GiB, other allocations: 24.18 GiB, max allowed: 42.43 GiB). Tried to allocate 3.00 MiB on private pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disable upper limit for memory allocations (may cause system failure)."
+    }
+  },
+  "9205": {
+    "naive": {
+      "max_batch": 1,
+      "first_fail_batch": 2,
+      "fail_reason": "exit=-6:   warnings.warn(DEPRECATION_MESSAGE, FutureWarning)\n/AppleInternal/Library/BuildRoots/4~CNqCugBVDnyjMNMKkBLi7l_mFxe7szyKNeR6JxM/Library/Caches/com.apple.xbs/TemporaryDirectory.BsrFNm/Sources/MetalPerformanceShaders/MPSCore/Utility/MPSCommandBufferImageCache.mm:1420: failed assertion `Failed to allocate private MTLBuffer for size 32537097600\n'\n/Users/halloranjt/miniconda3/envs/ironclad-agents/lib/python3.11/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown\n  warnings.warn('resource_tracker: There appear to be %d '",
+      "repeats": [
+        {
+          "ok": true,
+          "length": 9205,
+          "batch_size": 1,
+          "method": "naive",
+          "seconds": 637.6399550437927,
+          "tokens_per_sec": 14.436046435276795
+        },
+        {
+          "ok": true,
+          "length": 9205,
+          "batch_size": 1,
+          "method": "naive",
+          "seconds": 650.2962181568146,
+          "tokens_per_sec": 14.155087701556148
+        },
+        {
+          "ok": true,
+          "length": 9205,
+          "batch_size": 1,
+          "method": "naive",
+          "seconds": 657.9925448894501,
+          "tokens_per_sec": 13.989520202765428
+        }
+      ],
+      "seconds_mean": 648.6429060300192,
+      "tokens_per_sec_mean": 14.193551446532789
+    },
+    "chunked": {
+      "max_batch": 2,
+      "first_fail_batch": 4,
+      "fail_reason": "MPS backend out of memory (MPS allocated: 22.81 GiB, other allocations: 19.69 GiB, max allowed: 42.43 GiB). Tried to allocate 12.00 MiB on private pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disable upper limit for memory allocations (may cause system failure).",
+      "repeats": []
+    }
+  },
+  "10218": {
+    "naive": {
+      "max_batch": null,
+      "first_fail_batch": 1,
+      "fail_reason": "MPS backend out of memory (MPS allocated: 8.78 GiB, other allocations: 37.54 GiB, max allowed: 42.43 GiB). Tried to allocate 119.74 MiB on private pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disable upper limit for memory allocations (may cause system failure)."
+    },
+    "chunked": {
+      "max_batch": 1,
+      "first_fail_batch": 2,
+      "fail_reason": "MPS backend out of memory (MPS allocated: 27.90 GiB, other allocations: 14.77 GiB, max allowed: 42.43 GiB). Tried to allocate 6.00 MiB on private pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disable upper limit for memory allocations (may cause system failure).",
+      "repeats": [
+        {
+          "ok": true,
+          "length": 10218,
+          "batch_size": 1,
+          "method": "chunked",
+          "seconds": 68.73959803581238,
+          "tokens_per_sec": 148.6479451723963
+        },
+        {
+          "ok": true,
+          "length": 10218,
+          "batch_size": 1,
+          "method": "chunked",
+          "seconds": 68.36035704612732,
+          "tokens_per_sec": 149.47259554401143
+        },
+        {
+          "ok": true,
+          "length": 10218,
+          "batch_size": 1,
+          "method": "chunked",
+          "seconds": 69.18583703041077,
+          "tokens_per_sec": 147.68918666848907
+        }
+      ],
+      "seconds_mean": 68.76193070411682,
+      "tokens_per_sec_mean": 148.60324246163228
+    }
+  },
+  "11231": {
+    "naive": {
+      "max_batch": null,
+      "first_fail_batch": 1,
+      "fail_reason": "exit=-6:   warnings.warn(DEPRECATION_MESSAGE, FutureWarning)\n/AppleInternal/Library/BuildRoots/4~CNqCugBVDnyjMNMKkBLi7l_mFxe7szyKNeR6JxM/Library/Caches/com.apple.xbs/TemporaryDirectory.BsrFNm/Sources/MetalPerformanceShaders/MPSCore/Utility/MPSCommandBufferImageCache.mm:1420: failed assertion `Failed to allocate private MTLBuffer for size 24217989312\n'\n/Users/halloranjt/miniconda3/envs/ironclad-agents/lib/python3.11/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown\n  warnings.warn('resource_tracker: There appear to be %d '"
+    },
+    "chunked": {
+      "max_batch": 1,
+      "first_fail_batch": 2,
+      "fail_reason": "MPS backend out of memory (MPS allocated: 20.91 GiB, other allocations: 21.80 GiB, max allowed: 42.43 GiB). Tried to allocate 6.00 MiB on private pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disable upper limit for memory allocations (may cause system failure).",
+      "repeats": [
+        {
+          "ok": true,
+          "length": 11231,
+          "batch_size": 1,
+          "method": "chunked",
+          "seconds": 79.31760692596436,
+          "tokens_per_sec": 141.59529561302952
+        },
+        {
+          "ok": true,
+          "length": 11231,
+          "batch_size": 1,
+          "method": "chunked",
+          "seconds": 77.75877404212952,
+          "tokens_per_sec": 144.4338614947179
+        },
+        {
+          "ok": true,
+          "length": 11231,
+          "batch_size": 1,
+          "method": "chunked",
+          "seconds": 79.60273718833923,
+          "tokens_per_sec": 141.08811325705514
+        }
+      ],
+      "seconds_mean": 78.8930393854777,
+      "tokens_per_sec_mean": 142.3724234549342
+    }
+  }
+}

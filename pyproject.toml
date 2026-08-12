@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nanbeige-mps-fix"
+version = "0.1.0"
+description = "Deployment-blocking bug fixes, a chunked-prefill memory fix, and reproduction scripts for running Nanbeige4.2-3B via transformers on Apple Silicon"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "John T. Halloran", email = "johnhalloran321@gmail.com"}
+]
+keywords = ["nanbeige", "apple-silicon", "mps", "transformers", "looped-transformer", "mixture-of-recursions"]
+
+dependencies = [
+    "torch>=2.2",
+    "transformers>=4.45",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "requests>=2.31",
+    "huggingface_hub>=0.24",
+]
+
+[project.optional-dependencies]
+# Only needed for experiments/run_bfcl_benchmark.py.
+bfcl = ["bfcl-eval", "soundfile"]
+
+[tool.setuptools]
+py-modules = []

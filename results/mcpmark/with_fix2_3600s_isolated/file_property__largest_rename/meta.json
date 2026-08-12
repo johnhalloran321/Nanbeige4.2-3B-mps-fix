@@ -1,0 +1,27 @@
+{
+  "task_name": "file_property__largest_rename",
+  "model_name": "openai/nanbeige42-harness",
+  "litellm_run_model_name": "nanbeige42-harness",
+  "reasoning_effort": "default",
+  "mcp": "filesystem",
+  "timeout": 3600,
+  "time": {
+    "start": "2026-08-09T07:36:49.860747",
+    "end": "2026-08-09T07:53:37.215992"
+  },
+  "agent_execution_time": 1007.2399487495422,
+  "task_execution_time": 1007.3552389144897,
+  "execution_result": {
+    "success": true,
+    "error_message": null,
+    "verification_error": null,
+    "verification_output": "🔍 Verifying largest file rename in: /Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/.mcpmark_backups/backup_filesystem_file_property_largest_rename_95493\n\n📋 Checking: sg.jpg does not exist\n✅ sg.jpg does not exist\n\n📋 Checking: largest.jpg exists\n✅ largest.jpg exists\n\n🎉 All verification checks passed!\n"
+  },
+  "token_usage": {
+    "input_tokens": 18426,
+    "output_tokens": 1314,
+    "total_tokens": 19740,
+    "reasoning_tokens": 0
+  },
+  "turn_count": 5
+}

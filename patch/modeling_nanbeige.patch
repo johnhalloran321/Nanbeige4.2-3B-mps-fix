@@ -1,0 +1,124 @@
+--- modeling_nanbeige.original.py	2026-08-10 07:31:17
++++ modeling_nanbeige.py	2026-08-10 07:31:17
+@@ -934,6 +934,21 @@
+         if return_ngram_embeddings:
+             return x, ngram_embeddings
+         return x
++
++
++# MPS-FIX (bug 2/5): transformers renamed Cache.get_max_length -> get_max_cache_shape,
++# and changed what "no maximum" means: the old API returned None for a dynamic/
++# unbounded cache; the new one returns -1 for the same case. The three call sites
++# below were written against the old sentinel. A bare `get_max_length =
++# get_max_cache_shape` alias passes -1 straight through instead of translating it
++# back to None, which was observed to make a normally-dead branch below reachable
++# (a `cache_length + input_ids.shape[1] > max_cache_length` tuple/int TypeError).
++# See MPS_FIX_NOTES.md.
++def _get_max_cache_length_compat(cache):
++    if hasattr(cache, "get_max_cache_shape"):
++        max_shape = cache.get_max_cache_shape()
++        return None if max_shape is None or max_shape < 0 else max_shape
++    return cache.get_max_length()
+ 
+ 
+ class NanbeigeRotaryEmbedding(nn.Module):
+@@ -944,7 +959,13 @@
+         self.max_position_embeddings = max_position_embeddings
+         self.base = base
+         inv_freq = 1.0 / (self.base ** (torch.arange(0, self.dim, 2, dtype=torch.int64).float().to(device) / self.dim))
+-        self.register_buffer("inv_freq", inv_freq, persistent=False)
++        # MPS-FIX (bug 4/5): persistent=False means this computed buffer has no
++        # entry in the checkpoint's state_dict, so it's never repopulated when
++        # from_pretrained() materializes the model off a meta device -- it was
++        # observed to load as all zeros (no positional information at all).
++        # persistent=True makes save_pretrained() bake the correct values into
++        # this checkpoint's weights directly. See MPS_FIX_NOTES.md.
++        self.register_buffer("inv_freq", inv_freq, persistent=True)
+         # For BC we register cos and sin cached
+         self.max_seq_len_cached = max_position_embeddings
+ 
+@@ -1067,14 +1088,22 @@
+         self._init_rope()
+ 
+     def _init_rope(self):
+-        if self.config.rope_scaling is None:
++        # MPS-FIX (bug 1/5): some transformers versions populate
++        # config.rope_scaling with a dict lacking a "type" key even when the
++        # checkpoint's own config.json sets rope_scaling: null (observed:
++        # KeyError: 'type' on `self.config.rope_scaling["type"]` below, on a
++        # rope_scaling dict). Treat any rope_scaling without a usable "type"
++        # the same as "no scaling", matching what this checkpoint actually
++        # asks for. See MPS_FIX_NOTES.md.
++        rope_scaling = self.config.rope_scaling
++        scaling_type = rope_scaling.get("type") if isinstance(rope_scaling, dict) else None
++        if not scaling_type:
+             self.rotary_emb = NanbeigeRotaryEmbedding(
+                 self.head_dim,
+                 max_position_embeddings=self.max_position_embeddings,
+                 base=self.rope_theta,
+             )
+         else:
+-            scaling_type = self.config.rope_scaling["type"]
+             scaling_factor = self.config.rope_scaling["factor"]
+             if scaling_type == "linear":
+                 self.rotary_emb = NanbeigeLinearScalingRotaryEmbedding(
+@@ -2368,7 +2397,7 @@
+         min_dtype = torch.finfo(dtype).min
+         sequence_length = input_tensor.shape[1]
+         if using_static_cache:
+-            target_length = past_key_values.get_max_length()
++            target_length = _get_max_cache_length_compat(past_key_values)
+         else:
+             target_length = (
+                 attention_mask.shape[-1]
+@@ -2414,7 +2443,15 @@
+ 
+ 
+ class NanbeigeForCausalLM(NanbeigePreTrainedModel):
+-    _tied_weights_keys = ["lm_head.weight"]
++    # MPS-FIX (bug 5/5): transformers migrated _tied_weights_keys from a list
++    # of parameter names to a dict mapping (tied name -> source name); the old
++    # list format makes `_get_tied_weight_keys`'s unconditional `.keys()` call
++    # raise `AttributeError: 'list' object has no attribute 'keys'` inside
++    # save_pretrained(). This checkpoint has tie_word_embeddings=False, so
++    # lm_head.weight isn't actually tied to anything -- this mapping only
++    # matters if a future checkpoint sets tie_word_embeddings=True. See
++    # MPS_FIX_NOTES.md.
++    _tied_weights_keys = {"lm_head.weight": "model.embed_tokens.weight"}
+ 
+     def __init__(self, config):
+         super().__init__(config)
+@@ -2601,9 +2638,10 @@
+         if past_key_values is not None:
+             # Past key values are always initialized with a `Cache` object -> no need for if-else anymore
+             past_length = cache_position[0] if cache_position is not None else self._get_cache_seq_length(past_key_values)
++            _cache_max_length = _get_max_cache_length_compat(past_key_values)
+             max_cache_length = (
+-                torch.tensor(past_key_values.get_max_length(), device=input_ids.device)
+-                if past_key_values.get_max_length() is not None
++                torch.tensor(_cache_max_length, device=input_ids.device)
++                if _cache_max_length is not None
+                 else None
+             )
+             cache_length = past_length if max_cache_length is None else torch.min(max_cache_length, past_length)
+@@ -2634,6 +2672,20 @@
+             position_ids.masked_fill_(attention_mask == 0, 1)
+             if past_key_values:
+                 position_ids = position_ids[:, -input_ids.shape[1] :]
++        elif position_ids is not None and position_ids.shape[1] != input_ids.shape[1]:
++            # MPS-FIX (bug 3/5, the crash): newer transformers versions pass a
++            # pre-computed position_ids kwarg covering the FULL accumulated
++            # sequence on every generation step (not just the new token(s)), so
++            # this branch is reached instead of the one above, which is the
++            # only place that used to re-trim it. Left untrimmed, input_length
++            # below is computed from the stale, oversized position_ids instead
++            # of the just-trimmed input_ids, corrupting cache_position into a
++            # multi-element range instead of the correct single new position --
++            # this is what produced mismatched Q/K/V sequence lengths deep in
++            # attention, surfacing as a hard Metal compiler crash on MPS
++            # ('mps.matmul contracting dimensions differ'). Re-trim it the same
++            # way the branch above already does for itself. See MPS_FIX_NOTES.md.
++            position_ids = position_ids[:, -input_ids.shape[1] :]
+ 
+         # if `inputs_embeds` are passed, we only want to use them in the 1st generation step
+         if inputs_embeds is not None and past_length == 0:

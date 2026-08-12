@@ -1,0 +1,27 @@
+{
+  "task_name": "file_context__pattern_matching",
+  "model_name": "openai/nanbeige42-harness",
+  "litellm_run_model_name": "nanbeige42-harness",
+  "reasoning_effort": "default",
+  "mcp": "filesystem",
+  "timeout": 3600,
+  "time": {
+    "start": "2026-08-09T05:37:17.805007",
+    "end": "2026-08-09T06:37:18.263899"
+  },
+  "agent_execution_time": 3600.3336329460144,
+  "task_execution_time": 3600.458884716034,
+  "execution_result": {
+    "success": false,
+    "error_message": "Execution timed out after 3600 seconds",
+    "verification_error": "Verification failed with no error message",
+    "verification_output": "🔍 Verifying File Filtering Task: Find Files with Common Substring...\n\n--- Answer File Exists ---\n❌ File 'answer.txt' not found\n\n--- Answer Format ---\n❌ Error reading answer file: [Errno 2] No such file or directory: '/Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/.mcpmark_backups/backup_filesystem_file_context_pattern_matching_76192/answer.txt'\n\n--- Files Exist ---\n❌ Error verifying file existence: [Errno 2] No such file or directory: '/Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/.mcpmark_backups/backup_filesystem_file_context_pattern_matching_76192/answer.txt'\n\n--- Matches are Correct ---\n❌ Error verifying matches: [Errno 2] No such file or directory: '/Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/.mcpmark_backups/backup_filesystem_file_context_pattern_matching_76192/answer.txt'\n\n==================================================\n❌ Task verification: FAIL\n"
+  },
+  "token_usage": {
+    "input_tokens": 5411,
+    "output_tokens": 295,
+    "total_tokens": 5706,
+    "reasoning_tokens": 0
+  },
+  "turn_count": 2
+}

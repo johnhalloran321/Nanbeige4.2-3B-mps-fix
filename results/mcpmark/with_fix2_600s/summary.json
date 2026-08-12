@@ -1,0 +1,149 @@
+{
+  "model_name": "openai/nanbeige42-harness",
+  "model_config": {
+    "mcp_service": "filesystem",
+    "model_name": "openai/nanbeige42-harness",
+    "litellm_run_model_name": "nanbeige42-harness",
+    "reasoning_effort": "default",
+    "timeout": 600,
+    "agent_name": "mcpmark"
+  },
+  "total_tasks": 10,
+  "successful_tasks": 1,
+  "failed_tasks": 9,
+  "success_rate": 10.0,
+  "total_task_execution_time": 5895.093175411224,
+  "average_task_execution_time": 589.5093175411224,
+  "total_agent_execution_time": 5891.627893686295,
+  "average_agent_execution_time": 589.1627893686294,
+  "token_usage": {
+    "total_input_tokens": 62604,
+    "total_output_tokens": 4090,
+    "total_tokens": 66694,
+    "total_reasoning_tokens": 0,
+    "avg_input_tokens": 6260.4,
+    "avg_output_tokens": 409.0,
+    "avg_total_tokens": 6669.4,
+    "avg_reasoning_tokens": 0.0
+  },
+  "turn_usage": {
+    "total_turns": 21,
+    "avg_turns": 2.1
+  },
+  "category_breakdown": {
+    "file_property": {
+      "total": 2,
+      "success_rate": 50.0,
+      "avg_time": 544.75,
+      "token_usage": {
+        "total_input": 27169,
+        "total_output": 1907,
+        "total": 29076,
+        "total_reasoning": 0,
+        "avg_input": 13584.5,
+        "avg_output": 953.5,
+        "avg_total": 14538.0,
+        "avg_reasoning": 0.0
+      },
+      "turn_usage": {
+        "total_turns": 8,
+        "avg_turns": 4.0
+      }
+    },
+    "legal_document": {
+      "total": 1,
+      "success_rate": 0.0,
+      "avg_time": 600.22,
+      "token_usage": {
+        "total_input": 0,
+        "total_output": 0,
+        "total": 0,
+        "total_reasoning": 0,
+        "avg_input": 0.0,
+        "avg_output": 0.0,
+        "avg_total": 0.0,
+        "avg_reasoning": 0.0
+      },
+      "turn_usage": {
+        "total_turns": 0,
+        "avg_turns": 0.0
+      }
+    },
+    "papers": {
+      "total": 1,
+      "success_rate": 0.0,
+      "avg_time": 600.32,
+      "token_usage": {
+        "total_input": 5255,
+        "total_output": 272,
+        "total": 5527,
+        "total_reasoning": 0,
+        "avg_input": 5255.0,
+        "avg_output": 272.0,
+        "avg_total": 5527.0,
+        "avg_reasoning": 0.0
+      },
+      "turn_usage": {
+        "total_turns": 2,
+        "avg_turns": 2.0
+      }
+    },
+    "file_context": {
+      "total": 3,
+      "success_rate": 0.0,
+      "avg_time": 600.86,
+      "token_usage": {
+        "total_input": 14723,
+        "total_output": 944,
+        "total": 15667,
+        "total_reasoning": 0,
+        "avg_input": 4907.67,
+        "avg_output": 314.67,
+        "avg_total": 5222.33,
+        "avg_reasoning": 0.0
+      },
+      "turn_usage": {
+        "total_turns": 5,
+        "avg_turns": 1.67
+      }
+    },
+    "student_database": {
+      "total": 2,
+      "success_rate": 0.0,
+      "avg_time": 600.89,
+      "token_usage": {
+        "total_input": 10250,
+        "total_output": 550,
+        "total": 10800,
+        "total_reasoning": 0,
+        "avg_input": 5125.0,
+        "avg_output": 275.0,
+        "avg_total": 5400.0,
+        "avg_reasoning": 0.0
+      },
+      "turn_usage": {
+        "total_turns": 4,
+        "avg_turns": 2.0
+      }
+    },
+    "folder_structure": {
+      "total": 1,
+      "success_rate": 0.0,
+      "avg_time": 600.7,
+      "token_usage": {
+        "total_input": 5207,
+        "total_output": 417,
+        "total": 5624,
+        "total_reasoning": 0,
+        "avg_input": 5207.0,
+        "avg_output": 417.0,
+        "avg_total": 5624.0,
+        "avg_reasoning": 0.0
+      },
+      "turn_usage": {
+        "total_turns": 2,
+        "avg_turns": 2.0
+      }
+    }
+  }
+}

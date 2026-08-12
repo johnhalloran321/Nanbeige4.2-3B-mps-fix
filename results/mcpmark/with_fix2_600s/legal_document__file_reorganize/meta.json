@@ -1,0 +1,27 @@
+{
+  "task_name": "legal_document__file_reorganize",
+  "model_name": "openai/nanbeige42-harness",
+  "litellm_run_model_name": "nanbeige42-harness",
+  "reasoning_effort": "default",
+  "mcp": "filesystem",
+  "timeout": 600,
+  "time": {
+    "start": "2026-08-07T18:00:34.317556",
+    "end": "2026-08-07T18:10:34.537866"
+  },
+  "agent_execution_time": 600.1134331226349,
+  "task_execution_time": 600.2203071117401,
+  "execution_result": {
+    "success": false,
+    "error_message": "Execution timed out after 600 seconds",
+    "verification_error": "Traceback (most recent call last):\n  File \"/Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/tasks/filesystem/easy/legal_document/file_reorganize/verify.py\", line 114, in <module>\n    main()\n  File \"/Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/tasks/filesystem/easy/legal_document/file_reorganize/verify.py\", line 100, in main\n    if not verify_func(test_dir):\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/tasks/filesystem/easy/legal_document/file_reorganize/verify.py\", line 63, in verify_only_v10_in_final_version\n    files = list(final_version_dir.iterdir())\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/halloranjt/miniconda3/envs/ironclad-agents/lib/python3.11/pathlib.py\", line 931, in iterdir\n    for name in os.listdir(self):\n                ^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/.mcpmark_backups/backup_filesystem_legal_document_file_reorganize_33105/legal_files/final_version'\n",
+    "verification_output": "🔍 Verifying Legal Document File Reorganization Task...\n\n--- Final Version Folder Exists ---\n❌ Folder 'legal_files/final_version' not found\n\n--- Target File Exists ---\n❌ File 'legal_files/final_version/Preferred_Stock_Purchase_Agreement_v10.txt' not found\n\n--- Only V10 in Final Version ---\n"
+  },
+  "token_usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0,
+    "reasoning_tokens": 0
+  },
+  "turn_count": 0
+}

@@ -1,0 +1,27 @@
+{
+  "task_name": "folder_structure__structure_analysis",
+  "model_name": "openai/nanbeige42-harness",
+  "litellm_run_model_name": "nanbeige42-harness",
+  "reasoning_effort": "default",
+  "mcp": "filesystem",
+  "timeout": 600,
+  "time": {
+    "start": "2026-08-07T17:50:33.608784",
+    "end": "2026-08-07T18:00:34.313403"
+  },
+  "agent_execution_time": 600.2671749591827,
+  "task_execution_time": 600.7045590877533,
+  "execution_result": {
+    "success": false,
+    "error_message": "Execution timed out after 600 seconds",
+    "verification_error": "Verification failed with no error message",
+    "verification_output": "🔍 Verifying Directory Structure Analysis Task in: /Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/.mcpmark_backups/backup_filesystem_folder_structure_structure_analysis_33105\n\n📋 Structure Analysis File Exists...\n❌ File 'structure_analysis.txt' not found\n\n📋 Python File Count is Correct...\n❌ Error reading structure_analysis.txt file: [Errno 2] No such file or directory: '/Users/halloranjt/work/tldd_march2026/gl/tldd/ironclad/ironclad_agent/nanbeige_apple_silicon_paper/mcpmark/.mcpmark_backups/backup_filesystem_folder_structure_structure_analysis_33105/structure_analysis.txt'\n\n❌ Some verification checks failed!\n"
+  },
+  "token_usage": {
+    "input_tokens": 5207,
+    "output_tokens": 417,
+    "total_tokens": 5624,
+    "reasoning_tokens": 0
+  },
+  "turn_count": 2
+}
