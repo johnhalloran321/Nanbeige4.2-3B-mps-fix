@@ -12,6 +12,11 @@ this session (ironclad_agent's promptopt.py machinery) rather than a
 synthetic tool list, and renders the prompt through the real chat template
 exactly as nanbeige_harness_server.py does, so the token count is the real
 one a production ironclad-agent request would send -- not an approximation.
+
+Supplementary: this reproduction itself has no dedicated section in the
+paper, but the resulting M=12,244 is the largest length in the paper's
+memory/batching sweep (Section 3.2, Table 2). See docs/index.md for the
+full writeup.
 """
 from __future__ import annotations
 

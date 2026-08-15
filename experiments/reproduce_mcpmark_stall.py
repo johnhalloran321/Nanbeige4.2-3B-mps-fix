@@ -12,6 +12,10 @@ mcpmark/results/.../file_context__file_splitting/messages.json, converted
 from litellm's Responses-API-style function_call/function_call_output
 messages into standard OpenAI ChatCompletions tool_calls/tool messages (what
 our harness's chat-template rendering actually expects).
+
+Supplementary: this diagnosis underpins the per-task outcomes in the paper's
+MCPMark table (Section 5.1, Table 3) but is not itself a separate section;
+see docs/index.md for the full writeup.
 """
 from __future__ import annotations
 

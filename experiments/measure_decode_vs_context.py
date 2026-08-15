@@ -11,6 +11,10 @@ trivial (~50 token) prompt. This isolates whether that slowdown is a
 genuine, reproducible function of context length (consistent with the
 Looped Transformer's doubled per-token compute, Section 3) rather than a
 one-off artifact of that specific replay.
+
+Supplementary: this experiment and its result (decode throughput falling
+from 15.5 to 2.1 tok/s between a trivial prompt and 5,120 tokens of context)
+are not tabulated in the paper; see docs/index.md for the full writeup.
 """
 from __future__ import annotations
 

@@ -15,7 +15,7 @@ the accompanying paper.
 |---|---|
 | `patch/` | The 5 bug fixes, as a patched `modeling_nanbeige.py` + diff against the original, plus `MPS_FIX_NOTES.md` (bug-by-bug technical writeup) |
 | `harness/` | `nanbeige_harness_server.py` — minimal OpenAI-compatible server backing onto the patched checkpoint, chunked prefill included |
-| `experiments/` | Every script behind a number in the paper: OOM reproduction, memory/batching sweeps, decode-throughput measurement, MCPMark/BFCL evaluation, the reasoning-loop and path-length ablations |
+| `experiments/` | Every script behind the paper's tables, plus supplementary experiments (OOM reproduction, decode-throughput measurement, the stalled-turn and path-length diagnostics) referenced in its prose or covered in `docs/index.md` |
 | `results/` | Committed result JSON (batch sweeps, BFCL, tool schema) and the MCPMark per-task transcripts (`meta.json`/`messages.json`) referenced in the paper |
 
 ## Install
@@ -46,41 +46,63 @@ curl http://127.0.0.1:8100/v1/chat/completions -H 'Content-Type: application/jso
 ## Reproducing the paper
 
 Each experiment script is self-contained and documented in its own docstring.
-Rough map from paper section to script:
+Map from paper section to script:
 
 | Paper section | Script(s) |
 |---|---|
-| §2, Demonstrable bugs | `patch/modeling_nanbeige.patch`, `patch/MPS_FIX_NOTES.md` |
-| §3.1, Original OOM / deriving M | `experiments/discover_tool_schema.py` → `experiments/reproduce_original_oom.py` |
-| §3.2, Memory/batching sweep (Table 1) | `experiments/prepare_longbench_samples.py` → `experiments/run_batch_sweep.py` |
-| §3.3, Decode throughput (Table 2) | `experiments/measure_decode_vs_context.py` |
-| §6.2, MCPMark diagnosis | `experiments/reproduce_mcpmark_stall.py`, `experiments/run_mcpmark_isolated.py`, `experiments/diagnose_mps_leak.py`, `experiments/diagnose_stalled_turns.py`, `experiments/run_mcpmark_isolated_shortpath.py` |
-| §6.3, BFCL | `experiments/run_bfcl_benchmark.py` |
+| §2, Five Initial Deployment Bugs | `patch/modeling_nanbeige.patch`, `patch/MPS_FIX_NOTES.md` |
+| §3.1, Chunked-prefill method | `patch/` fix, `_chunked_prefill_generate` in `harness/nanbeige_harness_server.py` |
+| §3.2, LongBench-Pro memory/batching sweep (Table 2) | `experiments/prepare_longbench_samples.py` → `experiments/run_batch_sweep.py` |
+| §4, System-prompt regression | `patch/chat_template.jinja`, `patch/MPS_FIX_NOTES.md` |
+| §5, MPS memory bug + per-task server isolation | `experiments/diagnose_mps_leak.py`, `experiments/run_mcpmark_isolated.py` |
+| §5.1, MCPMark, Filesystem easy tier (Table 3) | `experiments/run_mcpmark_isolated.py` |
+| §5.2, BFCL (Table 4) | `experiments/run_bfcl_benchmark.py` |
 
 MCPMark itself ([eval-sys/mcpmark](https://github.com/eval-sys/mcpmark)) is a separate,
 third-party benchmark and is not vendored here — clone it yourself and point
 `MCPMARK_DIR` at it; see the docstrings in `run_mcpmark_isolated*.py`.
+
+### Supplementary experiments (not tabulated in the paper)
+
+These aren't behind a numbered section/table in `paper.tex` — they underpin
+claims made in its prose, motivated later experiments, or were cut for space
+during condensing to the arXiv version. All are covered in full in
+[docs/index.md](docs/index.md).
+
+| What it establishes | Script(s) |
+|---|---|
+| Deriving $M=12{,}244$, the production-OOM token length used as the largest length in Table 2 | `experiments/discover_tool_schema.py` → `experiments/reproduce_original_oom.py` |
+| Decode throughput vs. context length — motivates isolating tool-calling correctness from decode speed via BFCL (§5.2) | `experiments/measure_decode_throughput.py`, `experiments/measure_decode_vs_context.py` |
+| Why individual MCPMark tasks stalled: resource/timeout exhaustion vs. a genuine reasoning-loop bug | `experiments/reproduce_mcpmark_stall.py`, `experiments/diagnose_stalled_turns.py` |
+| Path-length ablation: does a shorter absolute working-directory path change MCPMark outcomes? | `experiments/run_mcpmark_isolated_shortpath.py` |
 
 ## Headline results
 
 - 5 independent bugs block loading/correct inference out of the box (silently-zeroed
   RoPE buffer, a removed cache API call, a config-dispatch `KeyError`, an MPS-specific
   crash, a `save_pretrained()` failure) — all fixed via sibling-file patching, no
-  `transformers` or cached-model-file edits.
-- Naive prefill fails via an uncatchable process abort by ~9,000 tokens even at
+  `transformers` or cached-model-file edits. (§2)
+- Naive prefill fails via an uncatchable process abort by ~8,000 tokens even at
   batch size 1; chunked prefill remains usable to ~11,000 tokens and supports
   2–4x larger batches at shorter lengths. Neither fixes the original 12,244-token
-  production OOM completely.
+  production OOM completely. (§3.2, Table 2)
+- MCPMark (Filesystem, easy tier): 3/10 under its own default 3600s per-task
+  timeout. (§5.1, Table 3)
+- BFCL (single-turn, isolates tool-calling correctness from decode speed): 100% on
+  correctly declining an irrelevant call, 63% on a single well-specified call,
+  3–30% on multiple calls in one turn. (§5.2, Table 4)
+
+Full numbers and methodology in the paper (arXiv link coming soon).
+
+### Supplementary findings (not in the paper)
+
 - Decode throughput falls from 15.5 to 2.1 tokens/sec between a trivial prompt and
   5,120 tokens of context — the actual bottleneck for real multi-turn agentic use,
-  not prefill.
-- MCPMark (Filesystem, easy tier): 1/10 under its default 600s per-task timeout,
-  3/10 once relaxed to its own 3600s default. BFCL (single-turn, isolates
-  tool-calling correctness from decode speed): 100% on correctly declining an
-  irrelevant call, 63% on a single well-specified call, 3–30% on multiple calls
-  in one turn.
+  not prefill. See `experiments/measure_decode_vs_context.py`.
+- Under a stricter 600s per-task timeout (vs. the paper's 3600s), MCPMark drops to
+  1/10 — an earlier run kept for comparison (`results/mcpmark/with_fix2_600s`).
 
-Full numbers, methodology, and honest failure-mode diagnosis in the paper (arXiv link coming soon).
+The honest failure-mode diagnosis behind these is in `docs/index.md`.
 
 ## License
 
@@ -93,8 +115,8 @@ Apache 2.0 license (`patch/LICENSE-APACHE-2.0`).
 
 ```bibtex
 @misc{halloran2026nanbeige,
-  title  = {Nanbeige4.2-3B on Apple Silicon: Deployment-Blocking Bugs, a
-            Looped-Transformer Memory Bound, and a Partial Chunked-Prefill Fix},
+  title  = {Nanbeige4.2-3B on Apple Silicon: Fixing Deployment Bugs and
+Decreasing Looped Transformer Memory Overhead},
   author = {Halloran, John T.},
   year   = {2026}
 }

@@ -8,7 +8,7 @@ usable MPS memory budget -- neither torch.mps.empty_cache() nor gc.collect()
 reclaim it, only a full process restart does. In a long-lived server handling
 many sequential MCPMark tasks, one task's OOM (itself expected, since
 real multi-turn conversations grow past the chunked-prefill memory ceiling
-established in Section 3/4) otherwise cascades into spurious OOMs on every
+established in Section 3.2/Table 2) otherwise cascades into spurious OOMs on every
 later, unrelated task. This mirrors the subprocess-per-trial isolation
 pattern already used for the batch-size sweep (run_batch_sweep.py), applied
 here per MCPMark task instead of per memory trial.

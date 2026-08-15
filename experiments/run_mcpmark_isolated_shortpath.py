@@ -17,6 +17,9 @@ Before running this, create the short-path copy (code + fixtures only, no
 .venv, no results):
     mkdir -p /private/tmp/mm
     cp -a $MCPMARK_DIR/{src,tasks,test_environments,pipeline.py,pyproject.toml,.mcp_env} /private/tmp/mm/
+
+Supplementary: this path-length ablation is not tabulated in the paper; see
+docs/index.md for the full writeup.
 """
 from __future__ import annotations
 

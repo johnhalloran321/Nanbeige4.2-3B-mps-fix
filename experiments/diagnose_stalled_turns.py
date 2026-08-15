@@ -12,6 +12,10 @@ Reuses the conversation-reconstruction logic from reproduce_mcpmark_stall.py.
 Loads the model once, replays each task's messages.json in turn, with a
 generous max_new_tokens (8000) and do_sample=False (matches the harness) so
 behavior is deterministic and reproducible.
+
+Supplementary: rules out a reasoning-loop bug as the cause of the paper's
+MCPMark failures (Section 5.1, Table 3); not itself a separate paper
+section. See docs/index.md for the full writeup.
 """
 from __future__ import annotations
 

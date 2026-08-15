@@ -4,13 +4,15 @@ of the Berkeley Function-Calling Leaderboard (BFCL v4), using categories that
 are single-turn, deterministic (AST/exact-match), and require no external
 LLM judge: simple_python, multiple, parallel, parallel_multiple, irrelevance.
 
-Motivation: MCPMark's near-zero success rate (Table 3) is dominated by an
-already-diagnosed, unrelated decode-throughput bottleneck (Section 3.3) --
-each MCPMark task requires many sequential turns with large uncapped
-generation budgets, so wall-clock timeouts are hit before task logic is
-exercised at all. BFCL's non-live, non-multi-turn categories are one
+Motivation: MCPMark's low success rate (3/10, paper Section 5.1/Table 3) is
+partly explained by an already-diagnosed, unrelated decode-throughput
+bottleneck (see measure_decode_vs_context.py -- supplementary, not tabulated
+in the paper): each MCPMark task requires many sequential turns with large
+uncapped generation budgets, so wall-clock timeouts can be hit before task
+logic is fully exercised. BFCL's non-live, non-multi-turn categories are one
 generation per task with a small output (a single tool call), which isolates
-tool-calling *correctness* from that confound.
+tool-calling *correctness* from that confound, complementing the paper's
+MCPMark result (Section 5.2/Table 4).
 
 Requires: `pip install bfcl-eval soundfile` (soundfile only needed to satisfy
 an import chain inside bfcl_eval.constants.model_config -- unrelated to

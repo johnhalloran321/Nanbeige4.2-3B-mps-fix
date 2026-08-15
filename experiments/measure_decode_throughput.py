@@ -6,9 +6,11 @@ EOS/stop token quickly for a representative MCP tool-calling prompt or
 keeps generating toward max_new_tokens.
 
 Motivation: MCPMark requests max_tokens=32768 per turn (uncapped by our
-harness). Table 1 in the paper only measures PREFILL time; if decode itself
-is slow, or if the model doesn't terminate cleanly, MCPMark's 600s per-task
-timeout could be exhausted by decode alone, independent of prefill length.
+harness). The paper's memory/batching sweep (Section 3.2, Table 2) only
+measures PREFILL time; if decode itself is slow, or if the model doesn't
+terminate cleanly, MCPMark's per-task timeout could be exhausted by decode
+alone, independent of prefill length. Supplementary: this measurement itself
+is not tabulated in the paper; see docs/index.md.
 """
 from __future__ import annotations
 
