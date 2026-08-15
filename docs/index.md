@@ -16,14 +16,17 @@ Silicon. It didn't work out of the box, and once we got it loading, it didn't wo
 This is the long-form version of the paper (arXiv link coming soon) — same numbers, same conclusions,
 but without cramming five distinct findings into two sentences. If you want the
 compressed, citable version, read the paper. If you want to understand *why* each of
-these things happened, read on.
+these things happened, read on. Everything through "Evaluation: BFCL" below is what's in
+the paper; the ["Supplementary experiments"](#supplementary-experiments) section after it
+covers extra digging that motivated or grew out of that work but never made it into the
+paper's own sections or tables.
 
 **TL;DR:** five independent bugs block the checkpoint from loading or running correctly
 via Hugging Face `transformers` at all. Fixing them isn't enough — the architecture's own
-memory and speed characteristics cause a real production out-of-memory crash and a severe
-agentic-throughput problem that no amount of bug-fixing touches. We fix what's fixable
-(chunked prefill for the memory side, a chat-template splice for a separate tool-calling
-regression), measure what isn't, and are honest in the paper about which is which.
+memory characteristics cause a real production out-of-memory crash that no amount of
+bug-fixing touches. We fix what's fixable (chunked prefill for the memory side, a
+chat-template splice for a separate tool-calling regression), measure what isn't, and are
+honest in the paper about which is which.
 
 ## Why we went looking
 
@@ -113,28 +116,12 @@ dedicated VRAM, that doubling is usually absorbable. On Apple Silicon's unified 
 shared with the OS and every other process, with none of CUDA's page-out flexibility — it
 isn't.
 
-We know this isn't hypothetical, because it already happened: a single real production
-request, with roughly 20+ MCP tool schemas serialized into its prompt, attempted a
-**35.89 GiB** allocation on a machine with 34.36 GB of total unified memory. Immediate,
-unrecoverable OOM.
-
-### Reproducing the exact crash, and deriving a real number for "how long is too long"
-
-We didn't want to estimate this — we wanted to reproduce it exactly. Using the same 11
-connected MCP servers elsewhere in this project (55 tool schemas total, matching the
-"20+" from the original incident), rendered through the real chat template and tokenized
-with the real Nanbeige tokenizer, we get a prompt that is **exactly 12,244 tokens**. We
-call this length *M* — it's not an estimate, it's a measured value, and it's the largest
-length in every sweep we ran.
-
-Naive prefill on this exact prompt doesn't just OOM the way the original crash did — it
-hits an even harder failure mode. On Apple Silicon, a Metal-level assertion aborts the
-whole process outright (`SIGABRT`), not a Python exception you could catch and retry.
-Chunked prefill on the identical prompt doesn't hard-crash, but it still fails, with a
-catchable `RuntimeError: MPS backend out of memory` — and it fails the *same way, every
-time*, byte-identically across independent fresh-process runs. That reproducibility
-matters: it means this is a deterministic property of the checkpoint at this length on
-this hardware, not noise you might get lucky and avoid on a good day.
+We didn't want the longest length in our sweep to be an arbitrary round number, so we
+anchored it to something real: **M = 12,244 tokens**, the exact token length of a genuine
+production request that OOM'd in the field. (See
+["Supplementary: deriving M"](#deriving-m-reproducing-the-original-production-oom) for
+exactly how we reconstructed that number — it's more machinery than you need to trust the
+table below, which stands on its own, but we wanted the provenance on record.)
 
 ## Chunked prefill: a real fix, but a partial one
 
@@ -176,28 +163,6 @@ prefill's real single-request ceiling sits between 11,231 and the full *M* = 12,
 methods fail at the original production scale. Chunking buys you real headroom, not a
 complete fix.
 
-## The other half of the problem: decode is slow, and getting slower fixes prefill doesn't touch
-
-Everything above is about *prefill* — processing the prompt before generation starts.
-Autoregressive decode is a completely separate cost, and it turns out to be the one that
-actually dominates real agentic use. We measured it directly: forced-length generation
-(`min_new_tokens = max_new_tokens`, so early stopping can't bias the number) after chunked
-prefill to a given context length.
-
-| Context tokens | Decode tok/s |
-|---|---|
-| 64 | 15.5 |
-| 1024 | 7.8 |
-| 5120 | 2.1 |
-
-Throughput falls by more than 7× between a trivial prompt and 5,120 tokens of context.
-This is the same architectural cost as the memory story above, just showing up on the
-other side of generation: every decode step also passes through both loop iterations of
-the full layer stack, so decode cost per token grows with context the same way prefill's
-does, stacked on top of the ordinary KV-cache attention cost every decoder-only model
-already pays. As you'll see below, this — not prefill, not a correctness bug — is what
-actually limits Nanbeige's usability as a real MCP-connected agent.
-
 ## A completely separate bug: the chat template silently discards its own system prompt
 
 This one has nothing to do with memory. Nanbeige4.2-3B's chat template does a plain
@@ -227,133 +192,75 @@ own zero-extra-whitespace auto-insert path, then splice the caller's system cont
 directly into the rendered string immediately after the auto-inserted default — never
 through the template's asymmetric explicit-system-message branch.
 
-## Evaluation: MCPMark, and why the headline number needs six footnotes
+## Evaluation: MCPMark (Filesystem subset, easy tier)
 
 We evaluated the combined fixes against [MCPMark](https://arxiv.org/abs/2509.24002)'s
-Filesystem task subset — real MCP servers, programmatically verified (no LLM-judge
-scoring bias), no external credentials required. This section is the one where "a wall of
-text" does the most damage, because there isn't one finding here — there are at least six,
-and they matter in a specific order.
+Filesystem task subset — 10 easy-tier tasks, no external credentials required, real MCP
+servers, programmatically verified (no LLM-judge scoring bias). The unpatched checkpoint
+can't even be instantiated under a current `transformers` release (bug 2, above) — a hard
+0/10 by construction, not a comparable per-task score.
 
-### The headline number, and why it's a trap
+Running the suite end to end surfaced one more bug, unrelated to the model itself: a
+single caught `RuntimeError: MPS backend out of memory` permanently degrades the harness
+process's usable memory budget for the rest of its life. We tested this directly — neither
+`torch.mps.empty_cache()` nor `gc.collect()` reclaim it; driver-allocated memory stayed
+pinned at 33–43 GB against an ~8 GB baseline even after explicit cleanup. Only a full
+process restart fixes it. Left uncorrected, one task's OOM — itself expected, since
+MCPMark conversations can legitimately grow past the 12,244-token ceiling measured
+above — cascades into spurious OOMs on every later, unrelated task in the same long-lived
+server. The fix mirrors what we already did for the batch-size sweep: restart the harness
+fresh before every task, so one task's failure can't poison the next one's result.
 
-The unpatched checkpoint can't even be instantiated under a current `transformers`
-release, so it scores a hard 0/10 by construction — not a comparable per-task score, just
-a wall. The *patched* checkpoint, run against the same 10 tasks under MCPMark's own
-default 600-second per-task budget, scores **1/10**. Five of six task categories show
-average task time pinned exactly at the 600-second ceiling, with correspondingly tiny
-turn counts (as low as zero turns for one category). Our first instinct was that this
-looked like prefill latency at long context. We were wrong, and we think it's worth
-saying so directly rather than quietly fixing the narrative — the trap here is that "0/10"
-and "1/10" both *look* like a broken model, but the actual explanation took real digging.
+With that isolation in place, the patched checkpoint scores **3/10** against MCPMark's own
+default 3,600-second (1-hour) per-task timeout:
 
-### Ruling out prefill
+| Task | Turns | Outcome |
+|---|---|---|
+| `largest_rename` | 5 | pass |
+| `txt_merging` | 5 | pass |
+| `file_reorganize` | 7 | pass |
+| `pattern_matching` | 2 | fail, timed out |
+| `file_splitting` | 4 | fail, tool response OOM |
+| `uppercase` | 7 | fail, tool response OOM |
+| `structure_analysis` | 2 | fail, tool response OOM |
+| `papers_counting` | 2 | fail, tool response OOM |
+| `duplicate_name` | 2 | fail, tool response OOM |
+| `recommender_name` | 2 | fail, tool response OOM |
 
-We reconstructed the exact prompt MCPMark sent at the moment two representative tasks
-stopped progressing — one that failed, one that succeeded — using the real 14-tool
-filesystem schema and the real tokenizer. Both land in the same narrow band: 5,122 and
-5,445 tokens. Chunked prefill finishes either in under 30 seconds. Prompt length does not
-distinguish the failing task from the succeeding one. Whatever MCPMark is actually
-exposing, it isn't prefill.
+For `pattern_matching`, the model correctly calls `read_multiple_files` once, but its
+arguments repeat a long absolute path 21 times, and the resulting context grows large
+enough to eventually time out. Every other failure accumulates context over multiple
+turns and exceeds memory capacity before the task is solved. In a bit more detail, two
+distinct mechanisms explain those seven failures:
 
-### The real cause: decode throughput
+**The model is verbose in exactly the wrong way.** In `pattern_matching`, deciding to read
+all 21 files in the task directory with a single `read_multiple_files` call is genuinely
+reasonable tool use. But repeating that one long path 21 times in the call's JSON
+arguments costs 1,779 tokens on its own. Nothing is wrong with the model's decision here —
+it's just that a verbose-but-correct tool call is itself expensive at this model's decode
+speed.
 
-We replayed the stalled task's exact conversation state end to end, letting generation run
-far longer than MCPMark's own budget allows. What actually happens: chunked prefill
-finishes in 24.5 seconds, and decode then generates 471 tokens at **1.89 tokens/sec**
-before stopping on its own. It is not stuck. It is not looping. It is simply far slower
-than a 600-second budget assumes. The generated text is coherent the whole way through —
-the model narrates an extended, genuinely thoughtful, repeatedly self-correcting
-deliberation ("Let me count the characters," "Actually, let me," "Let me get the file size
-first") before finally emitting a tool call. This lines up almost exactly with our
-controlled decode measurement above (2.10 tok/s at ~5,100 tokens of context vs. 1.89
-tok/s in the real replay). MCPMark also requests up to 32,768 tokens per turn, uncapped by
-our harness, so a task that needs several such turns — each costing on the order of a
-minute once context reaches a few thousand tokens — exhausts a 600-second budget through
-ordinary accumulation, not any single catastrophic call.
+**A single tool response can blow the memory budget by itself.** In the other six failed
+tasks, the model calls `directory_tree` or `search_files` exactly once, as you'd expect —
+and the *tool's own response*, not anything the model generated, comes back at 14,500 to
+42,400 tokens. The MCP filesystem reference server's `directory_tree` has no depth limit,
+size cap, or pagination; one fixture (`student_database`) genuinely contains 451 files
+across 150 student folders, and the tool dumps the entire pretty-printed tree in one
+response. That single tool result exceeds our measured 12,244-token chunked-prefill
+ceiling by up to 3.5×, so the very next prefill attempt OOMs — deterministically, every
+time. This is real, generalizable friction between an unbounded, size-agnostic MCP tool
+and a memory-constrained model, not something specific to MCPMark.
 
-### Giving it more time
-
-We re-ran the same 10 tasks with the per-task timeout raised from 600 to 3,600
-seconds — MCPMark's own tool default, not a number we picked to flatter the result.
-Doing this surfaced a *second*, completely independent bug (see the next section), but
-once that was fixed, the score moved from 1/10 to **3/10**. Two additional tasks crossed
-the finish line, and a third made substantial visible progress (2 turns → 7 turns, 5.2K →
-36K tokens of accumulated context) without quite finishing. More time recovers real,
-additional capability — which is exactly what you'd expect from a throughput bottleneck,
-and not what you'd expect from a correctness bug.
-
-### An unplanned detour: a second memory bug
-
-Raising the timeout didn't just give the model more time — it also gave a genuinely new
-bug room to appear. A single caught `RuntimeError: MPS backend out of memory` turns out to
-*permanently* degrade the harness process's usable memory budget for the rest of its
-life. We tested this directly: neither `torch.mps.empty_cache()` nor `gc.collect()`
-reclaim the lost memory — driver-allocated memory stayed pinned at 33–43 GB against an
-~8 GB baseline even after explicit cleanup. Only a full process restart fixes it.
-Uncorrected, one task's OOM (itself expected, since conversations can legitimately grow
-past our measured memory ceiling) cascaded into spurious OOMs on every later, unrelated
-task in the same long-lived server. The fix mirrors what we already did for the batch-size
-sweep: restart the harness fresh before every task, so one task's failure can't poison the
-next one's measurement.
-
-### Is it a reasoning loop? No — and we checked directly rather than assuming
-
-Five of the ten tasks stall at just two turns even under the full 3,600-second budget —
-too few turns for "it's just slow" to be the whole story on its own, and exactly the kind
-of pattern that *would* worry us if it turned out to be the model looping. So we checked,
-directly: we replayed each stalled conversation against the model with the HTTP layer
-removed (so any crash surfaces a full traceback) and generation allowed to run up to 8,000
-tokens. None of the five produced repetitive, garbled, or non-terminating output. Every
-single one terminated normally or hit a clean, deterministic error. Two distinct
-mechanisms explain all five, and neither one is a reasoning loop.
-
-### Mechanism one: the model is verbose in exactly the wrong way
-
-In one task, the model correctly decided to read all 21 files in the task directory with
-a single `read_multiple_files` call — genuinely reasonable tool use. But the call's JSON
-arguments repeat a long absolute path 21 times, so generating this *one, valid,
-well-formed* tool call costs 1,779 tokens and 723 seconds at 2.46 tok/s. Nothing is wrong
-with the model's decision here. It's just that at this decode speed, a verbose but correct
-tool call is itself expensive.
-
-### Mechanism two: a single tool response can blow the memory budget by itself
-
-In the other four stalled tasks, the model calls `directory_tree` or `search_files`
-exactly once, as you'd expect — and the *tool's own response*, not anything the model
-generated, comes back at 14,500 to 42,400 tokens. The MCP filesystem reference server's
-`directory_tree` has no depth limit, size cap, or pagination. One fixture
-(`student_database`) genuinely contains 451 files across 150 student folders, and the tool
-dumps the entire pretty-printed tree in one response. That single tool result exceeds our
-measured 12,244-token chunked-prefill ceiling by up to 3.5×, so the very next prefill
-attempt OOMs — deterministically, every time. This is real, generalizable friction between
-an unbounded, size-agnostic MCP tool and a memory-constrained model. Any model with a
-comparable memory ceiling hits the same wall on a realistically-populated directory; it's
-not specific to MCPMark.
-
-### How much of this is MCPMark's own fault?
-
-A fair question, and one we tested rather than argued about. MCPMark's own
-backup-directory naming scheme adds a real prefix to every path in every tool call or
-response — in our environment, about 190 characters, before you even get to the actual
-filename. We relocated a copy of MCPMark to a short root (cutting that shared prefix to 86
-characters) and re-ran three representative tasks under otherwise identical conditions.
-The result lines up exactly with the two mechanisms above: the task whose bloat came from
-the *model* repeating the path, and the task whose bloat came from a tool that echoes full
-paths per match, both shrank substantially (47% and 41% respectively) — with the
-`search_files` task moving from an immediate crash to a slower, non-crashing timeout
-instead. The task whose bloat came from `directory_tree`'s bare filenames was completely
-unaffected (a 0.3% difference, consistent with noise). Shortening the deployment path is a
-real, free win for tools that echo full paths — but it does nothing for the more
-fundamental issue: an unbounded directory listing over a genuinely large real directory
-will still exceed this model's memory ceiling no matter where that directory lives on
-disk.
+(There's more digging behind this result than the paper reports — a stricter,
+non-default timeout, ruling out prefill as an alternative explanation, a direct check for
+a reasoning-loop bug, and a path-length ablation — all in
+["Supplementary experiments"](#supplementary-experiments) below.)
 
 ## Evaluation: BFCL, or what happens when you remove the clock
 
-MCPMark's score is dominated by decode throughput and tool-response size — not by whether
-the model calls tools *correctly*. To isolate correctness on its own, we separately
-evaluated the patched checkpoint against the
+MCPMark's failures above are dominated by tool-response size and, for one task, a
+timeout — not by whether the model calls tools *correctly*. To isolate correctness on its
+own, we separately evaluated the patched checkpoint against the
 [Berkeley Function-Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html)'s
 non-live, single-turn categories: one correct call, picking 1 of N candidate functions,
 emitting 2+ calls to the same function, emitting 2+ calls to different functions, and
@@ -373,9 +280,132 @@ The model is genuinely good at knowing when *not* to call a tool, and reasonably
 a single well-specified call. But it's specifically, consistently weak at emitting
 *multiple* tool calls in one turn — almost every failure in both parallel-call categories
 is the model producing one call where two were required. That's a distinct, format-level
-limitation. It would show up even on hardware fast enough to make decode throughput a
-complete non-issue, and it's worth reporting on its own rather than folding it into the
-same "it's just slow" story as MCPMark.
+limitation. It would show up even on hardware fast enough to make MCPMark's memory and
+timeout issues a complete non-issue, and it's worth reporting on its own rather than
+folding it into the same story as MCPMark.
+
+## Supplementary experiments
+
+Everything above matches the paper. Everything below doesn't have its own section or
+table there — it's the digging that motivated the paper's experiments, or grew out of
+them, kept here because it's genuinely useful context and because every script behind it
+is in this repo either way.
+
+### Deriving M: reproducing the original production OOM
+
+We didn't want to estimate the longest length in the memory sweep above — we wanted to
+reproduce the real crash exactly. That said, upfront: this is more machinery than the
+paper's Table 2 actually needs. The sweep's eight lengths stand on their own regardless of
+where the top one came from; what follows is just the provenance, for the record, not a
+load-bearing part of the argument.
+
+The original incident: a single real production request, with roughly 20+ MCP tool
+schemas serialized into its prompt, attempted a **35.89 GiB** allocation on a machine with
+34.36 GB of total unified memory. Immediate, unrecoverable OOM. To reproduce it exactly
+rather than approximate it, we reused 11 already-connected MCP servers elsewhere in this
+project (55 tool schemas total — more than the original incident's "20+", which is why
+this reproduction needed that many servers even though nothing about the paper's
+conclusions requires such a large tool count), rendered through the real chat template and
+tokenized with the real Nanbeige tokenizer. That gives a prompt of **exactly 12,244
+tokens** — the M used throughout the memory sweep.
+
+Naive prefill on this exact prompt doesn't just OOM the way the original crash did — it
+hits an even harder failure mode. On Apple Silicon, a Metal-level assertion aborts the
+whole process outright (`SIGABRT`), not a Python exception you could catch and retry.
+Chunked prefill on the identical prompt doesn't hard-crash, but it still fails, with a
+catchable `RuntimeError: MPS backend out of memory` — and it fails the *same way, every
+time*, byte-identically across independent fresh-process runs.
+
+### Decode throughput vs. context length
+
+Everything in the memory sweep above is about *prefill* — processing the prompt before
+generation starts. Autoregressive decode is a separate cost, and in practice it's the one
+that dominates real agentic use. We measured it directly: forced-length generation
+(`min_new_tokens = max_new_tokens`, so early stopping can't bias the number) after chunked
+prefill to a given context length.
+
+| Context tokens | Decode tok/s |
+|---|---|
+| 64 | 15.5 |
+| 1024 | 7.8 |
+| 5120 | 2.1 |
+
+Throughput falls by more than 7× between a trivial prompt and 5,120 tokens of context.
+This is the same architectural cost as the memory story above, just showing up on the
+other side of generation: every decode step also passes through both loop iterations of
+the full layer stack, so decode cost per token grows with context the same way prefill's
+does, stacked on top of the ordinary KV-cache attention cost every decoder-only model
+already pays. This result motivated separating tool-calling correctness (BFCL, above) from
+raw throughput when evaluating MCPMark below.
+
+### MCPMark under a stricter, non-default timeout
+
+The paper reports MCPMark under its own default 3,600-second (1-hour) per-task timeout.
+Before we knew that was the right number to use, we first ran the same 10 tasks under
+MCPMark's *other* built-in default — 600 seconds — and got **1/10**, with five of six
+failing categories showing average task time pinned exactly at the 600-second ceiling and
+correspondingly tiny turn counts (as low as zero turns for one category). Our first
+instinct was that this looked like prefill latency at long context; it wasn't (see below).
+
+Re-running the same 10 tasks with the timeout raised to 3,600 seconds moved the score from
+1/10 to 3/10: two additional tasks crossed the finish line, and a third made substantial
+visible progress (2 turns → 7 turns, 5.2K → 36K tokens of accumulated context) without
+quite finishing. More time recovering real, additional capability is exactly what you'd
+expect from a throughput bottleneck, and not what you'd expect from a correctness bug —
+which is part of why the paper reports the 3,600-second number rather than the stricter
+one.
+
+### Ruling out prefill, confirming decode throughput as the real cause
+
+We reconstructed the exact prompt MCPMark sent at the moment two representative tasks
+stopped progressing under the 600-second timeout — one that failed, one that succeeded —
+using the real 14-tool filesystem schema and the real tokenizer. Both land in the same
+narrow band: 5,122 and 5,445 tokens. Chunked prefill finishes either in under 30 seconds.
+Prompt length does not distinguish the failing task from the succeeding one — whatever was
+exhausting the timeout, it wasn't prefill.
+
+We then replayed the stalled task's exact conversation state end to end, letting
+generation run far longer than the 600-second budget allows. What actually happens:
+chunked prefill finishes in 24.5 seconds, and decode then generates 471 tokens at **1.89
+tokens/sec** before stopping on its own. It is not stuck, and it is not looping — it is
+simply far slower than a 600-second budget assumes. The generated text is coherent the
+whole way through: the model narrates an extended, genuinely thoughtful,
+repeatedly-self-correcting deliberation ("Let me count the characters," "Actually, let
+me," "Let me get the file size first") before finally emitting a tool call. This lines up
+almost exactly with the controlled decode measurement above (2.10 tok/s at ~5,100 tokens
+of context vs. 1.89 tok/s in the real replay). MCPMark also requests up to 32,768 tokens
+per turn, uncapped by our harness, so a task needing several such turns — each costing on
+the order of a minute once context reaches a few thousand tokens — exhausts a 600-second
+budget through ordinary accumulation, not any single catastrophic call.
+
+### Is it a reasoning loop? No — and we checked directly rather than assuming
+
+Five of the ten tasks stall at just two turns even under the full 3,600-second budget —
+too few turns for "it's just slow" to be the whole story on its own, and exactly the kind
+of pattern that *would* worry us if it turned out to be the model looping. So we checked,
+directly: we replayed each stalled conversation against the model with the HTTP layer
+removed (so any crash surfaces a full traceback) and generation allowed to run up to 8,000
+tokens. None of the five produced repetitive, garbled, or non-terminating output. Every
+single one terminated normally or hit a clean, deterministic error — consistent with the
+tool-response-OOM mechanism described above, not a reasoning loop.
+
+### Path-length ablation: how much of this is MCPMark's own fault?
+
+A fair question, and one we tested rather than argued about. MCPMark's own
+backup-directory naming scheme adds a real prefix to every path in every tool call or
+response — in our environment, about 190 characters, before you even get to the actual
+filename. We relocated a copy of MCPMark to a short root (cutting that shared prefix to 86
+characters) and re-ran three representative tasks under otherwise identical conditions.
+The result lines up exactly with the two mechanisms described above: the task whose bloat
+came from the *model* repeating the path, and the task whose bloat came from a tool that
+echoes full paths per match, both shrank substantially (47% and 41% respectively) — with
+the `search_files` task moving from an immediate crash to a slower, non-crashing timeout
+instead. The task whose bloat came from `directory_tree`'s bare filenames was completely
+unaffected (a 0.3% difference, consistent with noise). Shortening the deployment path is a
+real, free win for tools that echo full paths — but it does nothing for the more
+fundamental issue: an unbounded directory listing over a genuinely large real directory
+will still exceed this model's memory ceiling no matter where that directory lives on
+disk.
 
 ## Try it yourself
 
@@ -384,7 +414,8 @@ or jump straight to:
 
 - [`patch/`](../patch/) — the five bug fixes, as a diff against the original model code
 - [`harness/`](../harness/) — the minimal server we ran every measurement against
-- [`experiments/`](../experiments/) — every script referenced above, one per finding
+- [`experiments/`](../experiments/) — every script referenced above, paper and
+  supplementary alike, one per finding
 - [`results/`](../results/) — the raw JSON and MCPMark transcripts behind every number
 - the paper (arXiv link coming soon) — the same content, compressed for citation
 
