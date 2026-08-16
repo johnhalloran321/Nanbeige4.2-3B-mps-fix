@@ -6,6 +6,7 @@ Looped Transformer memory bound, and every measurement/reproduction script behin
 the accompanying paper.
 
 **Patched checkpoint:** [johnhalloran/Nanbeige4.2-3B-mps-fix](https://huggingface.co/johnhalloran/Nanbeige4.2-3B-mps-fix)
+(5 core bugs only — see [below](#what-the-hf-checkpoint-does-and-doesnt-include) for what needs this repo)
 **Paper:** arXiv link coming soon
 **Long-form writeup:** [docs/index.md](docs/index.md) (same findings, one per section, no compression)
 
@@ -28,6 +29,29 @@ pip install -e ".[bfcl]"
 
 Requires Apple Silicon (MPS) to reproduce the memory/throughput measurements; the
 patch itself (`patch/modeling_nanbeige.py`) is not MPS-specific.
+
+## What the HF checkpoint does and doesn't include
+
+The five bugs in `patch/` (RoPE buffer zeroing, the RoPE-config dispatch `KeyError`,
+the removed cache-API call, the MPS position-IDs crash, `save_pretrained`) are baked
+into [`johnhalloran/Nanbeige4.2-3B-mps-fix`](https://huggingface.co/johnhalloran/Nanbeige4.2-3B-mps-fix)'s
+weights/config directly — loading it via plain `transformers` gets you those fixes for
+free, no code from this repo required.
+
+The other two fixes are **not** on the checkpoint, because neither one can be baked in:
+
+- **Chunked prefill** (Section 3.1) is a serving-time strategy, not a weight or config
+  change — it only exists in `harness/nanbeige_harness_server.py`.
+- **The system-prompt splice** (Section 4) patches the chat template's *rendered
+  output*, not the template file itself — the HF checkpoint's `chat_template.jinja` is
+  byte-identical to the unpatched original. Loading the checkpoint directly and
+  supplying any system message (as most agent frameworks do) still triggers the
+  regression.
+
+If you load the HF checkpoint directly instead of going through this repo's harness,
+you'll still hit the memory ceiling and the system-prompt regression — use
+`harness/nanbeige_harness_server.py`, or port the relevant fix from
+`harness/nanbeige_harness_server.py` / `patch/MPS_FIX_NOTES.md` yourself.
 
 ## Quick start: run the patched model
 
