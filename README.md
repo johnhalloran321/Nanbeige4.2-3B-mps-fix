@@ -7,7 +7,7 @@ the accompanying paper.
 
 **Patched checkpoint:** [johnhalloran/Nanbeige4.2-3B-mps-fix](https://huggingface.co/johnhalloran/Nanbeige4.2-3B-mps-fix)
 (5 core bugs only — see [below](#what-the-hf-checkpoint-does-and-doesnt-include) for what needs this repo)
-**Paper:** arXiv link coming soon
+**Paper:** [arXiv:2608.13987](https://arxiv.org/abs/2608.13987)
 **Long-form writeup:** [docs/index.md](docs/index.md) (same findings, one per section, no compression)
 
 ## What's here
@@ -116,7 +116,7 @@ during condensing to the arXiv version. All are covered in full in
   correctly declining an irrelevant call, 63% on a single well-specified call,
   3–30% on multiple calls in one turn. (§5.2, Table 4)
 
-Full numbers and methodology in the paper (arXiv link coming soon).
+Full numbers and methodology in the [paper](https://arxiv.org/abs/2608.13987).
 
 ### Supplementary findings (not in the paper)
 

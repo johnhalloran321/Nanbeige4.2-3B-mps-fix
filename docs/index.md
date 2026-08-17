@@ -13,7 +13,7 @@ local, on-device agent backend: small on disk, allegedly strong for its size. We
 actually run it, as a real backend behind a real MCP-connected agent loop, on Apple
 Silicon. It didn't work out of the box, and once we got it loading, it didn't work well.
 
-This is the long-form version of the paper (arXiv link coming soon) — same numbers, same conclusions,
+This is the long-form version of the [paper](https://arxiv.org/abs/2608.13987) — same numbers, same conclusions,
 but without cramming five distinct findings into two sentences. If you want the
 compressed, citable version, read the paper. If you want to understand *why* each of
 these things happened, read on. Everything through "Evaluation: BFCL" below is what's in
@@ -417,7 +417,7 @@ or jump straight to:
 - [`experiments/`](../experiments/) — every script referenced above, paper and
   supplementary alike, one per finding
 - [`results/`](../results/) — the raw JSON and MCPMark transcripts behind every number
-- the paper (arXiv link coming soon) — the same content, compressed for citation
+- [the paper](https://arxiv.org/abs/2608.13987) — the same content, compressed for citation
 
 The patched checkpoint is on Hugging Face as
 [`johnhalloran/Nanbeige4.2-3B-mps-fix`](https://huggingface.co/johnhalloran/Nanbeige4.2-3B-mps-fix).
